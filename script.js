@@ -1,4 +1,4 @@
-const CATS = ["Semua", "Tobrut", "Tepos", "Dildo", "Muncrat"];
+const CATS = ["Semua", "Lucu", "Horor", "Ngakak", "Komedi"];
 
 let videos = [];
 
@@ -17,72 +17,30 @@ const pageTitle = document.getElementById("pageTitle");
 
 const PAGE_TITLES = { videos: "Video", categories: "Categories", artis: "Artis", chanel: "Chanel" };
 
-// --- Penyimpanan video (IndexedDB) ---
-// File video (blob) disimpan permanen di browser, bukan cuma di memori,
-// jadi videonya masih ada walau halaman di-refresh atau ditutup.
-const DB_NAME = "hivereelDB";
-const STORE_NAME = "videos";
-let dbPromise = null;
-
-function openDB() {
-  if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      req.result.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-  return dbPromise;
-}
-
-async function saveVideoToDB(record) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    const req = tx.objectStore(STORE_NAME).add(record);
-    req.onsuccess = () => resolve(req.result); // id yang dihasilkan
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function loadVideosFromDB() {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const req = tx.objectStore(STORE_NAME).getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function deleteVideoFromDB(id) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    const req = tx.objectStore(STORE_NAME).delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
-}
+// --- Koneksi ke server backend (Hivereel Server) ---
+// Video sekarang disimpan di server (database + file), bukan lagi di browser,
+// jadi bisa diakses dari perangkat manapun.
+// GANTI URL DI BAWAH INI dengan alamat server kamu setelah di-deploy.
+const API_BASE = "http://localhost:4000";
 
 async function loadSavedVideos() {
   try {
-    const saved = await loadVideosFromDB();
-    const restored = saved
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .map((rec) => ({
-        dbId: rec.id,
-        title: rec.title,
-        cat: rec.cat,
-        user: rec.user,
-        url: URL.createObjectURL(rec.blob),
-      }));
-    videos = [...restored];
+    const res = await fetch(`${API_BASE}/api/videos`);
+    if (!res.ok) throw new Error("Gagal mengambil daftar video dari server");
+    const rows = await res.json();
+    videos = rows.map((rec) => ({
+      dbId: rec.id,
+      title: rec.title,
+      cat: rec.cat,
+      user: rec.user,
+      url: `${API_BASE}/uploads/${rec.filename}`,
+    }));
     render();
   } catch (err) {
-    console.error("Gagal memuat video tersimpan:", err);
+    console.error("Gagal memuat video dari server:", err);
+    emptyTitle.textContent = "Tidak bisa terhubung ke server";
+    emptyText.textContent = "Pastikan server Hivereel sudah jalan dan alamat API_BASE di script.js sudah benar.";
+    emptyState.style.display = "flex";
   }
 }
 
@@ -302,10 +260,16 @@ function openPlayer(v) {
 
 async function removeVideo(v) {
   if (!v.dbId) return;
-  await deleteVideoFromDB(v.dbId);
-  videos = videos.filter((x) => x.dbId !== v.dbId);
-  closePlayer();
-  render();
+  try {
+    const res = await fetch(`${API_BASE}/api/videos/${v.dbId}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Gagal menghapus video di server");
+    videos = videos.filter((x) => x.dbId !== v.dbId);
+    closePlayer();
+    render();
+  } catch (err) {
+    console.error("Gagal menghapus video:", err);
+    alert("Gagal menghapus video. Coba lagi.");
+  }
 }
 
 function closePlayer() {
@@ -368,29 +332,48 @@ fileInput.addEventListener("change", () => {
 document.getElementById("confirmUpload").addEventListener("click", async () => {
   const title = document.getElementById("titleInput").value.trim() || "Video tanpa judul";
   const user = document.getElementById("artistInput").value.trim() || "Tanpa nama";
-  const cat = document.getElementById("catInput").value.trim() || "Vlog";
+  const cat = document.getElementById("catInput").value.trim() || "Lainnya";
 
   if (!pendingFile) {
     closeModal();
     return;
   }
 
-  const record = { title, cat, user, blob: pendingFile, createdAt: Date.now() };
-  let dbId = null;
+  const confirmBtn = document.getElementById("confirmUpload");
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = "Mengunggah...";
+
   try {
-    dbId = await saveVideoToDB(record);
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("cat", cat);
+    formData.append("user", user);
+    formData.append("video", pendingFile);
+
+    const res = await fetch(`${API_BASE}/api/videos`, { method: "POST", body: formData });
+    if (!res.ok) throw new Error("Server menolak upload");
+    const rec = await res.json();
+
+    videos.unshift({
+      dbId: rec.id,
+      title: rec.title,
+      cat: rec.cat,
+      user: rec.user,
+      url: `${API_BASE}/uploads/${rec.filename}`,
+    });
+
+    closeModal();
+    page = "videos";
+    document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
+    document.querySelector('.nav-item[data-page="videos"]').classList.add("active");
+    render();
   } catch (err) {
-    console.error("Gagal menyimpan video:", err);
+    console.error("Gagal mengunggah video:", err);
+    alert("Gagal mengunggah video. Pastikan server sedang jalan lalu coba lagi.");
+  } finally {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = "Publikasikan";
   }
-
-  const url = URL.createObjectURL(pendingFile);
-  videos.unshift({ dbId, title, cat, user, url });
-  closeModal();
-
-  page = "videos";
-  document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
-  document.querySelector('.nav-item[data-page="videos"]').classList.add("active");
-  render();
 });
 
 loadSavedVideos();
