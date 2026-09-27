@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Porntop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="brand">Porntop</div>
+  <div class="nav-group">
+    <button class="nav-item active" data-page="videos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>
+      <span class="navlabel">Video</span>
+    </button>
+    <button class="nav-item" data-page="categories">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="navlabel">Categories</span>
+    </button>
+    <button class="nav-item" data-page="artis">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
+      <span class="navlabel">Artis</span>
+    </button>
+    <button class="nav-item" data-page="chanel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 3l4 4 4-4"/></svg>
+      <span class="navlabel">Chanel</span>
+    </button>
+  </div>
+  <button class="upload-btn" id="openUpload">+ Upload video</button>
+</aside>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="menu-btn" id="menuBtn" aria-label="Buka menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <h1 class="page-title" id="pageTitle">Video</h1>
+    <div class="search">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input id="searchInput" placeholder="Cari video...">
+    </div>
+  </div>
+
+  <div class="content" id="content">
+    <div class="sub-header" id="subHeader" style="display:none;"></div>
+    <div class="chips" id="chips"></div>
+
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="emptyState" style="display:none;">
+      <h3 id="emptyTitle">Belum ada video di sini</h3>
+      <p id="emptyText">Unggah video pertamamu untuk mulai mengisi Porntop.</p>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="playerOverlay">
+  <div class="player-wrap">
+    <button class="player-close" id="closePlayer" aria-label="Tutup">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <video id="playerVideo" controls playsinline></video>
+    <div class="player-info">
+      <p class="player-title" id="playerTitle"></p>
+      <p class="player-meta" id="playerMeta"></p>
+      <button class="delete-btn" id="deletePlayer" style="display:none;">Hapus video</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Unggah video</h2>
+    <div class="dropzone" id="dropzone">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 20h16"/></svg>
+      <div id="dzText">Seret video ke sini, atau klik untuk memilih file</div>
+      <input type="file" id="fileInput" accept="video/*" style="display:none;">
+    </div>
+    <div class="field">
+      <label>Judul</label>
+      <input id="titleInput" placeholder="Beri judul video ini">
+    </div>
+    <div class="field">
+      <label>Artis / Channel</label>
+      <input id="artistInput" placeholder="Nama artis atau channel">
+    </div>
+    <div class="field">
+      <label>Kategori</label>
+      <input id="catInput" placeholder="Misal: Tobrut, Tepos, Dildo, Muncrat">
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="cancelUpload">Batal</button>
+      <button class="btn primary" id="confirmUpload">Publikasikan</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
