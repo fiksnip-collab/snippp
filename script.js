@@ -1,4 +1,4 @@
-const CATS = ["Semua", "Lucu", "Horor", "Ngakak", "Komedi"];
+const CATS = ["Semua", "Aksion", "game", "vlog", "Komedi", "18+"];
 
 let videos = [];
 
